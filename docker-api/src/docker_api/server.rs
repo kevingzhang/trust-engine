@@ -1,7 +1,7 @@
-use tonic::{transport::Server, Request, Response, Status};
+use tonic::{body::BoxBody, transport::Server, Request, Response, Status};
 //use docktape::*;
 use docktape::{Docker, Socket};
-
+use tower::Service;
 use serde_json;
 //use serde_json::Value;
 pub mod docker_api {
@@ -92,6 +92,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let greeter = MyGreeter::default();
 
     Server::builder()
+    .interceptor_fn(move |svc, req| {
+            let auth_header = req.headers().get("authorization").clone();
+
+            let authed = if let Some(auth_header) = auth_header {
+                auth_header == "Leo security agent with some-secret-token"
+            } else {
+                false
+            };
+
+            let fut = svc.call(req);
+
+            async move {
+                if authed {
+                    fut.await
+                } else {
+                    // Cancel the inner future since we never await it
+                    // the IO never gets registered.
+                    drop(fut);
+                    let res = http::Response::builder()
+                        .header("grpc-status", "16")
+                        .body(BoxBody::empty())
+                        .unwrap();
+                    Ok(res)
+                }
+            }
+        })
+        .clone()
         .serve(addr, GetDockerServer::new(greeter))
         .await?;
 
