@@ -1,8 +1,8 @@
 pub mod docker_api {
-    tonic::include_proto!("docker_api");
+    tonic::include_proto!("docker_pb");
 }
 use http::header::HeaderValue;
-use docker_api::{client::GetDockerClient, DockerInfoRequest};
+use docker_api::{client::GetDockerClient, DockerInfoRequest, DockerImagesRequest, DockerImagesReply};
 use tonic::transport::Channel;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -17,17 +17,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .channel();
     let mut client = GetDockerClient::new(channel);
     let request = tonic::Request::new(DockerInfoRequest {
-        name: "hello".into(),
+        name: "info".into(),
     });
 
-    let response = client.get_docker_info(request).await?;
+    // let response = client.get_docker_info(request).await?;
 
-    println!("RESPONSE={}", response.into_inner().info);
-    // let request = tonic::Request::new(DockerRequest {
-    //     name: "hello".into(),
-    // });
-    // let response = client.get_docker_images(request).await?;
+    // println!("RESPONSE={}", response.into_inner().info);
+    let request = tonic::Request::new(DockerImagesRequest {
+        req: "images".into(),
+    });
+    let response = client.get_docker_images(request).await?;
 
-    // println!("RESPONSE={:?}", response);
+    println!("RESPONSE={:#?}", response.into_inner().images);
     Ok(())
 }

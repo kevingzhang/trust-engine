@@ -18,7 +18,7 @@ option java_multiple_files = true;
 option java_package = "io.grpc.examples.helloworld";
 option java_outer_classname = "HelloWorldProto";
 
-package docker_api;
+package docker_pb;
 
 // The greeting service definition.
 // service Greeter {
@@ -28,7 +28,7 @@ package docker_api;
 
 service GetDocker {
   rpc GetDockerInfo (DockerInfoRequest) returns (DockerInfoReply) {}
-  rpc GetDockerImages (DockerRequest) returns (DockerReply) {}
+  rpc GetDockerImages (DockerImagesRequest) returns (DockerImagesReply) {}
 }
 // The request message containing the user's name.
 // message HelloRequest {
@@ -44,8 +44,13 @@ message DockerRequest {
   string name = 1;
 }
 
-message DockerReply {
-  string message = 1;
+message DockerImagesReply {
+  repeated Image images = 1;
+}
+
+message Image {
+  string id = 1;
+  repeated string tags = 2;
 }
 
 message DockerInfoRequest {
@@ -54,4 +59,8 @@ message DockerInfoRequest {
 
 message DockerInfoReply {
   string info = 1;
+}
+
+message DockerImagesRequest{
+  string req = 1;
 }

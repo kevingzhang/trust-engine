@@ -160,7 +160,7 @@ pub fn compile_protos(proto_path: impl AsRef<Path>) -> io::Result<()> {
     let proto_dir = proto_path
         .parent()
         .expect("proto file should reside in a directory");
-
+    println!("Compiling protobuff from {:?} to {:?}", proto_path, proto_dir);
     self::configure().compile(&[proto_path], &[proto_dir])?;
 
     Ok(())

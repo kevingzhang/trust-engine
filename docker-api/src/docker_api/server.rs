@@ -3,14 +3,15 @@ use tonic::{body::BoxBody, transport::Server, Request, Response, Status};
 use docktape::{Docker, Socket};
 use tower::Service;
 use serde_json;
+use std::vec::Vec;
 //use serde_json::Value;
 pub mod docker_api {
-    tonic::include_proto!("docker_api");
+    tonic::include_proto!("docker_pb");
 }
 
 use docker_api::{
     server::{GetDocker, GetDockerServer},
-    DockerReply, DockerRequest,DockerInfoReply, DockerInfoRequest
+    DockerInfoReply, DockerInfoRequest, DockerImagesReply
 };
 
 #[derive(Default)]
@@ -45,22 +46,15 @@ impl GetDocker for MyGreeter {
 
     async fn get_docker_images(
         &self,
-        request: Request<DockerRequest>,
-    ) -> Result<Response<DockerReply>, Status> {
+        request: Request<
+        docker_api::DockerImagesRequest>,
+    ) -> Result<Response<DockerImagesReply>, Status> {
         println!("Got a request: {:?}", request);
+        
+        let images = get_images();
 
-        let string = &self.data;
-
-        println!("My data: {:?}", string);
-
-        // let reply = hello_world::HelloReply {
-        //     message: "Zomg, it works!".into(),
-        // };
-        println!("Before wait");
-        get_images();
-        println!("After wait ");
-        let reply = docker_api::DockerReply {
-            message: "imnages".to_string(),
+        let reply = docker_api::DockerImagesReply {
+            images: images
         };
         Ok(Response::new(reply))
     }
@@ -73,15 +67,22 @@ fn get_info() -> serde_json::Value {
     _info
 }
 
-fn get_images() {
+fn get_images() -> Vec<docker_api::Image>{
+    let mut images = Vec::new();
     let socket = Socket::new("/var/run/docker.sock");
     let mut docker = Docker::new(socket.clone());
     let _images = docker.get_images().unwrap();
     
     for image in &_images {
     	println!("{} -> repoTags: {:?}", image.id(), image.repo_tags());
+        let mut tags = Vec::new();
+        for tag in image.repo_tags().unwrap(){
+            tags.push(tag);
+        }
+        let i = docker_api::Image{ id: image.id(), tags};
+        images.push(i);
     }
-    ;
+    images
 }
 
 
