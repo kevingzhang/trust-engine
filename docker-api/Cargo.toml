@@ -5,8 +5,8 @@ authors = ["Kevin Zhang <kevin.zhang.canada@gmail.com>"]
 edition = "2018"
 
 [[bin]]
-name = "docker-server"
-path = "src/docker_api/server.rs"
+name = "server"
+path = "src/server.rs"
 
 [[bin]]
 name = "docker-client"

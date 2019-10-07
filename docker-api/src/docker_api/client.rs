@@ -23,11 +23,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let response = client.get_docker_info(request).await?;
 
     println!("RESPONSE={}", response.into_inner().info);
-    // let request = tonic::Request::new(DockerImagesRequest {
-    //     req: "images".into(),
-    // });
-    // let response = client.get_docker_images(request).await?;
+    let request = tonic::Request::new(DockerImagesRequest {
+        req: "images".into(),
+    });
+    let response = client.get_docker_images(request).await?;
 
-    //println!("RESPONSE={:#?}", response.into_inner().images);
+    println!("RESPONSE={:#?}", response.into_inner().images);
     Ok(())
 }

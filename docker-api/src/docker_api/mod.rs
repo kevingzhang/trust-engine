@@ -1,16 +1,16 @@
-use tonic::{body::BoxBody, transport::Server, Request, Response, Status};
-//use docktape::*;
+#![allow(non_snake_case)]
+use tonic::{Request, Response, Status};
 use docktape::{Docker, Socket};
-use tower::Service;
 use serde_json;
 use std::vec::Vec;
-//use serde_json::Value;
+
+
 pub mod docker_pb {
     tonic::include_proto!("docker_pb");
 }
 
 use docker_pb::{
-    server::{GetDocker, GetDockerServer},
+    server::{GetDocker},
     DockerInfoReply, DockerInfoRequest, DockerImagesReply
 };
 
@@ -125,42 +125,3 @@ impl Image{
 }
  */
 
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "[::1]:50051".parse().unwrap();
-    let docker_req_handler = DockerReqHandler::default();
-
-    Server::builder()
-    .interceptor_fn(move |svc, req| {
-            let auth_header = req.headers().get("authorization").clone();
-
-            let authed = if let Some(auth_header) = auth_header {
-                auth_header == "Leo security agent with some-secret-token"
-            } else {
-                false
-            };
-
-            let fut = svc.call(req);
-
-            async move {
-                if authed {
-                    fut.await
-                } else {
-                    // Cancel the inner future since we never await it
-                    // the IO never gets registered.
-                    drop(fut);
-                    let res = http::Response::builder()
-                        .header("grpc-status", "16")
-                        .body(BoxBody::empty())
-                        .unwrap();
-                    Ok(res)
-                }
-            }
-        })
-        .clone()
-        .serve(addr, GetDockerServer::new(docker_req_handler))
-        .await?;
-
-    Ok(())
-}
