@@ -1,3 +1,4 @@
 /target
+/docker-api/target
 **/*.rs.bk
 Cargo.lock
