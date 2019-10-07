@@ -3,7 +3,6 @@ use tonic::{body::BoxBody, transport::Server, Request, Response, Status};
 use docktape::{Docker, Socket};
 use tower::Service;
 use serde_json;
-use serde_json::Value;
 use std::vec::Vec;
 //use serde_json::Value;
 pub mod docker_pb {
@@ -16,29 +15,21 @@ use docker_pb::{
 };
 
 #[derive(Default)]
-pub struct MyGreeter {
-    data: String,
+pub struct DockerReqHandler {
+//    data: String,
 }
 
 #[tonic::async_trait]
-impl GetDocker for MyGreeter {
+impl GetDocker for DockerReqHandler {
     async fn get_docker_info(
         &self,
         request: Request<DockerInfoRequest>,
     ) -> Result<Response<DockerInfoReply>, Status> {
-        println!("Got a request: {:?}", request);
-
-        let string = &self.data;
-
-        println!("My data: {:?}", string);
         println!("Into inner of request: {:?}", request.into_inner());
 
-        // let reply = hello_world::HelloReply {
-        //     message: "Zomg, it works!".into(),
-        // };
-        println!("Before wait");
+
         let info  = get_info();
-        println!("After wait");
+
         let reply = docker_pb::DockerInfoReply {
             info: serde_json::to_string_pretty(&info).unwrap(),
         };
@@ -138,7 +129,7 @@ impl Image{
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:50051".parse().unwrap();
-    let greeter = MyGreeter::default();
+    let docker_req_handler = DockerReqHandler::default();
 
     Server::builder()
     .interceptor_fn(move |svc, req| {
@@ -168,7 +159,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         })
         .clone()
-        .serve(addr, GetDockerServer::new(greeter))
+        .serve(addr, GetDockerServer::new(docker_req_handler))
         .await?;
 
     Ok(())

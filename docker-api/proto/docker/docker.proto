@@ -20,11 +20,6 @@ option java_outer_classname = "HelloWorldProto";
 
 package docker_pb;
 
-// The greeting service definition.
-// service Greeter {
-//   // Sends a greeting
-//   rpc SayHello (HelloRequest) returns (HelloReply) {}
-// }
 
 service GetDocker {
   rpc GetDockerInfo (DockerInfoRequest) returns (DockerInfoReply) {}
