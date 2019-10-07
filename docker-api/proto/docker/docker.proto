@@ -50,7 +50,13 @@ message DockerImagesReply {
 
 message Image {
   string id = 1;
-  repeated string tags = 2;
+  uint64 created = 2;
+  string parent_id = 3;
+  repeated string repo_digests = 4;
+  uint64 size = 5;
+  uint64 virtual_size = 6;
+  map<string, string> labels = 7;
+  repeated string tags = 8;
 }
 
 message DockerInfoRequest {

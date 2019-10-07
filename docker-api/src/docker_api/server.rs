@@ -3,13 +3,14 @@ use tonic::{body::BoxBody, transport::Server, Request, Response, Status};
 use docktape::{Docker, Socket};
 use tower::Service;
 use serde_json;
+use serde_json::Value;
 use std::vec::Vec;
 //use serde_json::Value;
-pub mod docker_api {
+pub mod docker_pb {
     tonic::include_proto!("docker_pb");
 }
 
-use docker_api::{
+use docker_pb::{
     server::{GetDocker, GetDockerServer},
     DockerInfoReply, DockerInfoRequest, DockerImagesReply
 };
@@ -38,7 +39,7 @@ impl GetDocker for MyGreeter {
         println!("Before wait");
         let info  = get_info();
         println!("After wait");
-        let reply = docker_api::DockerInfoReply {
+        let reply = docker_pb::DockerInfoReply {
             info: serde_json::to_string_pretty(&info).unwrap(),
         };
         Ok(Response::new(reply))
@@ -47,13 +48,13 @@ impl GetDocker for MyGreeter {
     async fn get_docker_images(
         &self,
         request: Request<
-        docker_api::DockerImagesRequest>,
+        docker_pb::DockerImagesRequest>,
     ) -> Result<Response<DockerImagesReply>, Status> {
         println!("Got a request: {:?}", request);
         
         let images = get_images();
 
-        let reply = docker_api::DockerImagesReply {
+        let reply = docker_pb::DockerImagesReply {
             images: images
         };
         Ok(Response::new(reply))
@@ -67,24 +68,73 @@ fn get_info() -> serde_json::Value {
     _info
 }
 
-fn get_images() -> Vec<docker_api::Image>{
-    let mut images = Vec::new();
+fn get_images() -> std::vec::Vec<docker_pb::Image>{
     let socket = Socket::new("/var/run/docker.sock");
     let mut docker = Docker::new(socket.clone());
-    let _images = docker.get_images().unwrap();
-    
-    for image in &_images {
-    	println!("{} -> repoTags: {:?}", image.id(), image.repo_tags());
-        let mut tags = Vec::new();
-        for tag in image.repo_tags().unwrap(){
-            tags.push(tag);
-        }
-        let i = docker_api::Image{ id: image.id(), tags};
-        images.push(i);
+    let images_value = docker.get_images_value();
+    println!("images value is {:#?}", images_value);
+
+    let arr_images: Vec<Image> = serde_json::from_value(images_value.unwrap()).unwrap();
+    let mut ret = std::vec::Vec::new();
+    for c in arr_images{
+         println!("c : {:#?}", c);
+        let image : docker_pb::Image = c.to_docker_pb_image();
+        println!("c convert to image: {:#?}", image);
+        ret.push(image);
     }
-    images
+
+    ret
 }
 
+#[derive(Default, serde::Deserialize, Debug)]
+pub struct Image{
+    pub Id: String,
+    pub Created: u64,
+    pub ParentId: Option<String>,
+    pub RepoDigests: Option<Vec<String>>,
+    pub Size: u64,
+    pub VirtualSize: u64,
+    pub Labels: Option<std::collections::HashMap<String, String>>,
+    pub RepoTags: Option<Vec<String>>
+}
+impl Image{
+    pub fn to_docker_pb_image(&self) ->docker_pb::Image {
+        docker_pb::Image{
+            id: self.Id.to_string(),
+            created: self.Created,
+            parent_id: self.ParentId.as_ref().unwrap().to_string(),
+            repo_digests: self.RepoDigests.as_ref().unwrap().to_vec(),
+            size: self.Size,
+            virtual_size: self.VirtualSize,
+            labels: std::collections::HashMap::new(),//self.Labels.unwrap(),
+            tags: self.RepoTags.as_ref().unwrap_or(&Vec::new()).to_vec(),
+            
+        }
+    }
+}
+
+/******
+ * 
+ * 
+ * pub struct Image {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+    #[prost(uint64, tag = "2")]
+    pub created: u64,
+    #[prost(string, tag = "3")]
+    pub parent_id: std::string::String,
+    #[prost(string, repeated, tag = "4")]
+    pub repo_digests: ::std::vec::Vec<std::string::String>,
+    #[prost(uint64, tag = "5")]
+    pub size: u64,
+    #[prost(uint64, tag = "6")]
+    pub virtual_size: u64,
+    #[prost(map = "string, string", tag = "7")]
+    pub labels: ::std::collections::HashMap<std::string::String, std::string::String>,
+    #[prost(string, repeated, tag = "8")]
+    pub tags: ::std::vec::Vec<std::string::String>,
+}
+ */
 
 
 #[tokio::main]
