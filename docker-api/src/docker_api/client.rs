@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		.channel();
 	let mut client = GetDockerClient::new(channel);
 	let request = tonic::Request::new(DockerInfoRequest {
-		name: "info".into(),
+		path: "".into(),
 	});
 
 	let response = client.get_docker_info(request).await?;

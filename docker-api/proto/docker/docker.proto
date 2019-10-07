@@ -35,10 +35,6 @@ service GetDocker {
 //   string message = 1;
 // }
 
-message DockerRequest {
-  string name = 1;
-}
-
 message DockerImagesReply {
   repeated Image images = 1;
 }
@@ -55,7 +51,7 @@ message Image {
 }
 
 message DockerInfoRequest {
-  string name = 1;
+  string path = 1;
 }
 
 message DockerInfoReply {

@@ -25,15 +25,24 @@ impl GetDocker for DockerReqHandler {
 		&self,
 		request: Request<DockerInfoRequest>,
 	) -> Result<Response<DockerInfoReply>, Status> {
-		println!("Into inner of request: {:?}", request.into_inner());
+		//println!("Into inner of request: {:?}", &request.into_inner());
 
-
+		let req_path = request.into_inner().path;
 		let info  = get_info();
-
+		
+		let info_in_req_path = | req_path | {
+			if req_path != "" {
+				serde_json::to_string_pretty(&info[req_path]).unwrap()
+			}else{
+				serde_json::to_string_pretty(&info).unwrap()
+			}
+		};
+		
 		let reply = docker_pb::DockerInfoReply {
-			info: serde_json::to_string_pretty(&info).unwrap(),
+			info: info_in_req_path(req_path),
 		};
 		Ok(Response::new(reply))
+	
 	}
 
 	async fn get_docker_images(
@@ -41,7 +50,7 @@ impl GetDocker for DockerReqHandler {
 		request: Request<
 		docker_pb::DockerImagesRequest>,
 	) -> Result<Response<DockerImagesReply>, Status> {
-		println!("Got a request: {:?}", request);
+		//println!("Got a request: {:?}", request);
 		
 		let images = get_images();
 
@@ -66,9 +75,9 @@ fn get_images() -> std::vec::Vec<docker_pb::Image>{
 	let arr_images: Vec<Image> = serde_json::from_value(images_value.unwrap()).unwrap();
 	let mut ret = std::vec::Vec::new();
 	for c in arr_images{
-		println!("c : {:#?}", c);
+		//println!("c : {:#?}", c);
 		let image : docker_pb::Image = c.to_docker_pb_image();
-		println!("c convert to image: {:#?}", image);
+		//println!("c convert to image: {:#?}", image);
 		ret.push(image);
 	}
 
