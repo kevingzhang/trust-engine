@@ -1,7 +1,0 @@
-[workspace]
-members = [
-    "tonic",
-    "tonic-build",
-    "docker-api",
-    "tonic-interop",
-]
