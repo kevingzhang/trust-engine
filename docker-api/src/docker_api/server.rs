@@ -72,12 +72,10 @@ fn get_images() -> std::vec::Vec<docker_pb::Image>{
     let socket = Socket::new("/var/run/docker.sock");
     let mut docker = Docker::new(socket.clone());
     let images_value = docker.get_images_value();
-    println!("images value is {:#?}", images_value);
-
     let arr_images: Vec<Image> = serde_json::from_value(images_value.unwrap()).unwrap();
     let mut ret = std::vec::Vec::new();
     for c in arr_images{
-         println!("c : {:#?}", c);
+        println!("c : {:#?}", c);
         let image : docker_pb::Image = c.to_docker_pb_image();
         println!("c convert to image: {:#?}", image);
         ret.push(image);
@@ -102,12 +100,12 @@ impl Image{
         docker_pb::Image{
             id: self.Id.to_string(),
             created: self.Created,
-            parent_id: self.ParentId.as_ref().unwrap().to_string(),
-            repo_digests: self.RepoDigests.as_ref().unwrap().to_vec(),
+            parent_id: self.ParentId.clone().unwrap(),
+            repo_digests: self.RepoDigests.clone().unwrap(),
             size: self.Size,
             virtual_size: self.VirtualSize,
-            labels: std::collections::HashMap::new(),//self.Labels.unwrap(),
-            tags: self.RepoTags.as_ref().unwrap_or(&Vec::new()).to_vec(),
+            labels: self.Labels.clone().unwrap_or(std::collections::HashMap::new()),
+            tags: self.RepoTags.clone().unwrap_or(Vec::new()),
             
         }
     }
