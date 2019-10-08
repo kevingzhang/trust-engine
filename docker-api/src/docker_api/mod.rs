@@ -2,6 +2,7 @@
 use tonic::{Request, Response, Status};
 use docktape::{Docker, Socket};
 use serde_json;
+use serde_json::json;
 use std::vec::Vec;
 
 
@@ -64,7 +65,7 @@ impl GetDocker for DockerReqHandler {
 fn get_info() -> serde_json::Value {
 	let socket = Socket::new("/var/run/docker.sock");
 	let mut docker = Docker::new(socket.clone());
-	let _info : serde_json::Value = docker.get_info().unwrap();
+	let _info : serde_json::Value = docker.get_info().unwrap_or(json!(null));
 	_info
 }
 
