@@ -13,19 +13,24 @@ name = "docker-client"
 path = "src/docker_api/client.rs"
 
 [dependencies]
-tonic = { path = "../../tonic/tonic", features = ["rustls"] }
-bytes = "0.4"
 prost = "0.5"
-prost-types = "*"
-tokio = "=0.2.0-alpha.6"
-futures-preview = { version = "=0.3.0-alpha.19", default-features = false, features = ["alloc"]}
-async-stream = "0.1.2"
-http = "0.1"
-tower = "=0.3.0-alpha.2"
-
-# Required for routeguide
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 docktape = { git = "https://github.com/kevingzhang/docktape-rs.git"}
+futures = "0.1"
+bytes = "0.4"
+env_logger = { version = "0.5", default-features = false }
+log = "0.4"
+http = "0.1"
+tokio = "0.1"
+tower-request-modifier = { git = "https://github.com/tower-rs/tower-http" }
+tower-hyper = "0.1"
+hyper = "0.12"
+tower-grpc = "0.1.1"#{ path = "../../tower-grpc", features = ["tower-hyper"] }
+tower-service = "0.2"
+tower-util = "0.1"
+shiplift = "0.5"
+tokio-codec = "0.1"
+tokio-io = "0.1"
 [build-dependencies]
-tonic-build = { path = "../../tonic/tonic-build" }
+tower-grpc-build = "0.1.0" #{ path = "../,,/tower-grpc-build",  features = ["tower-hyper"]  }

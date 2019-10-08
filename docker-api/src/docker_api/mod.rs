@@ -1,12 +1,14 @@
 #![allow(non_snake_case)]
-use tonic::{Request, Response, Status};
+
+use tower_grpc::{Request, Response};
 use docktape::{Docker, Socket};
 use serde_json;
 use std::vec::Vec;
 
 
 pub mod docker_pb {
-	tonic::include_proto!("docker_pb");
+	//tonic::include_proto!("docker_pb");
+	include!(concat!(env!("OUT_DIR"), "/docker_pb.rs"));
 }
 
 use docker_pb::{
@@ -14,19 +16,16 @@ use docker_pb::{
 	DockerInfoReply, DockerInfoRequest, DockerImagesReply
 };
 
-#[derive(Default)]
+#[derive(Clone, Debug, Default)]
 pub struct DockerReqHandler {
 //    data: String,
 }
 
-#[tonic::async_trait]
 impl GetDocker for DockerReqHandler {
-	async fn get_docker_info(
-		&self,
-		request: Request<DockerInfoRequest>,
-	) -> Result<Response<DockerInfoReply>, Status> {
-		//println!("Into inner of request: {:?}", &request.into_inner());
+	type DockerInfoFuture = future::FutureResult<Response<DockerInfoReply>, tower_grpc::Status>;
 
+	fn get_docker_info(&mut self, request: Request<DockerInfoRequest>) -> Self::DockerInfoFuture {
+		println!("Into inner of request: {:?}", &request.into_inner());
 		let req_path = request.into_inner().path;
 		let info  = get_info();
 		
@@ -37,29 +36,31 @@ impl GetDocker for DockerReqHandler {
 				serde_json::to_string_pretty(&info).unwrap()
 			}
 		};
-		
-		let reply = docker_pb::DockerInfoReply {
-			info: info_in_req_path(req_path),
-		};
-		Ok(Response::new(reply))
 	
-	}
-
-	async fn get_docker_images(
-		&self,
-		request: Request<
-		docker_pb::DockerImagesRequest>,
-	) -> Result<Response<DockerImagesReply>, Status> {
-		//println!("Got a request: {:?}", request);
-		
-		let images = get_images();
-
-		let reply = docker_pb::DockerImagesReply {
-			images: images
-		};
-		Ok(Response::new(reply))
+		let response = Response::new(DockerInfoReply {
+				info: info_in_req_path(req_path),
+		});
+		future::ok(response)
 	}
 }
+
+
+
+// 	async fn get_docker_images(
+// 		&self,
+// 		request: Request<
+// 		docker_pb::DockerImagesRequest>,
+// 	) -> Result<Response<DockerImagesReply>, Status> {
+// 		//println!("Got a request: {:?}", request);
+		
+// 		let images = get_images();
+
+// 		let reply = docker_pb::DockerImagesReply {
+// 			images: images
+// 		};
+// 		Ok(Response::new(reply))
+// 	}
+// }
 
 fn get_info() -> serde_json::Value {
 	let socket = Socket::new("/var/run/docker.sock");
