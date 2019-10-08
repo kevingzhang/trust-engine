@@ -73,7 +73,8 @@ fn get_images() -> std::vec::Vec<docker_pb::Image>{
 	let socket = Socket::new("/var/run/docker.sock");
 	let mut docker = Docker::new(socket.clone());
 	let images_value = docker.get_images_value();
-	let arr_images: Vec<Image> = serde_json::from_value(images_value.unwrap()).unwrap_or(Vec::new());
+	println!("images_value is {:#?}", &images_value);
+	let arr_images: Vec<Image> = serde_json::from_value(images_value.unwrap_or(json!(null))).unwrap_or(Vec::new());
 	let mut ret = std::vec::Vec::new();
 	for c in arr_images{
 		//println!("c : {:#?}", c);
