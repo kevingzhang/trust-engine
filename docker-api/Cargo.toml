@@ -13,7 +13,7 @@ name = "docker-client"
 path = "src/docker_api/client.rs"
 
 [dependencies]
-tonic = { path = "../../tonic/tonic", features = ["rustls"] }
+tonic = { git = "https://github.com/hyperium/tonic.git", features = ["rustls"] }
 bytes = "0.4"
 prost = "0.5"
 prost-types = "*"
