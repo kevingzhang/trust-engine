@@ -28,7 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn run() ->Result<(), Box<dyn std::error::Error>>{
 	
-	let channel = Channel::from_static("http://rpi-docker-compose_docker-api-server_1:50051")
+	let channel = Channel::from_static("http://docker-api-server:50051")
 		.intercept_headers(|headers| {
 			headers.insert(
 				"authorization",
