@@ -1,0 +1,41 @@
+version: '3'
+services:
+  rust-server:
+#    name: rust-server
+    environment:
+      - SERVER_NAME:localhost
+    image: kevingzhang/node2rust
+    volumes:
+    #  - /var/run/docker.sock:/var/run/docker.sock
+      - .:/code
+    networks:
+      - inside-node
+    #ports:
+    #  - "3030:3030"
+    command: /code/server
+#  rust-client:
+#    image: arm32v7/rust
+#    volumes:
+#      - ./debug:/code
+#    networks:
+#      - inside-node
+#    command: /bin/bash
+  node-client:
+#    name: node-client
+    image: kevingzhang/node2rust
+    volumes:
+      - .:/code
+    command: node /code/src/client.js
+    networks:
+      - inside-node
+  node-server:
+    image: arm32v7/node
+#    name: node-server
+    volumes:
+      - .:/code
+    command: node /code/src/server.js
+    networks:
+      - inside-node
+networks:
+  inside-node:
+    driver: bridge
