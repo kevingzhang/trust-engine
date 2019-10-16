@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		let result = run().await;
 		match(result){
 			Ok(r)=>{
-				
+				println!("result is: {:#?}", r);
 			},
 			Err(e)=>{
 				println!("Error from run function {:#?}", e);
@@ -28,7 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn run() ->Result<(), Box<dyn std::error::Error>>{
 	
-	let channel = Channel::from_static("http://[::1]:50051")
+	let channel = Channel::from_static("http://docker-api-server:50051")
 		.intercept_headers(|headers| {
 			headers.insert(
 				"authorization",
