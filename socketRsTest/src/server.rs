@@ -1,11 +1,9 @@
-extern crate futures;
-extern crate hyper;
-extern crate hyperlocal;
 
+use std::env;
 use hyper::service::service_fn;
 use hyper::{header, Body, Request, Response};
 use std::{fs, io};
-
+use std::path::{PathBuf};
 const PHRASE: &'static str = "It's a Unix system. I know this.";
 
 fn hello(
@@ -22,13 +20,15 @@ fn hello(
 }
 
 fn run() -> io::Result<()> {
-    if let Err(err) = fs::remove_file("test.sock") {
+    
+    let sock_file_name = get_sock_file();
+    if let Err(err) = fs::remove_file(&sock_file_name) {
         if err.kind() != io::ErrorKind::NotFound {
             return Err(err);
         }
     }
 
-    let svr = hyperlocal::server::Server::bind("test.sock", || service_fn(hello))?;
+    let svr = hyperlocal::server::Server::bind(&sock_file_name, || service_fn(hello))?;
 
     {
         let path = svr.local_addr().as_pathname().unwrap();
@@ -46,4 +46,15 @@ fn main() {
     if let Err(err) = run() {
         eprintln!("error starting server: {}", err)
     }
+}
+
+fn get_sock_file () -> String {
+    let cargo_manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+    println!("cargo_manifest_dir is {}", cargo_manifest_dir);
+    let mut buf = PathBuf::from(cargo_manifest_dir);
+    buf.set_file_name("rust.sock");
+    
+    let sock_file_name = env::var("SOCKETFILE").unwrap_or(
+        buf.as_path().to_str().unwrap().to_string());
+    sock_file_name
 }

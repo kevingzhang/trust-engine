@@ -1,19 +1,20 @@
-extern crate futures;
-extern crate hyper;
-extern crate hyperlocal;
+
 
 use std::io::{self, Write};
-
+use std::env;
+use std::path::PathBuf;
 use futures::Future;
 use futures::Stream;
 use hyper::{rt, Client};
 use hyperlocal::{UnixConnector, Uri};
 
 fn main() {
+    
+    let sock_file_name = get_sock_file ();
     let client = Client::builder()
         .keep_alive(false)
         .build::<_, ::hyper::Body>(UnixConnector::new());
-    let url = Uri::new("test.sock", "/").into();
+    let url = Uri::new(sock_file_name, "/").into();
 
     let work = client
         .get(url)
@@ -35,4 +36,15 @@ fn main() {
         });
 
     rt::run(work);
+}
+
+fn get_sock_file () -> String {
+    let cargo_manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+    println!("cargo_manifest_dir is {}", cargo_manifest_dir);
+    let mut buf = PathBuf::from(cargo_manifest_dir);
+    buf.set_file_name("rust.sock");
+    
+    let sock_file_name = env::var("SOCKETFILE").unwrap_or(
+        buf.as_path().to_str().unwrap().to_string());
+    sock_file_name
 }
