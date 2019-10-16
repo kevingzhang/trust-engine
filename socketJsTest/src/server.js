@@ -16,7 +16,7 @@ const connections = {};
 var SHUTDOWN = false;
 
 // Our socket
-const SOCKETFILE = process.env.SOCKETFILE || '/socket/node.sock';
+const SOCKETFILE = process.env.SOCKETFILE || __dirname + '/node.sock';
 
 mode = 'server';
 console.info('Loading interprocess communications test');

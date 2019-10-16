@@ -18,7 +18,7 @@ var net = require('net'),
 var SHUTDOWN = false;
 
 // Our socket
-const SOCKETFILE = process.env.SOCKETFILE || '/socket/node.sock';
+const SOCKETFILE = process.env.SOCKETFILE || __dirname + '/node.sock';
 mode = "client";
 // For simplicity of demonstration, both ends in this one file
 

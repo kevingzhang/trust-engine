@@ -39,12 +39,14 @@ fn main() {
 }
 
 fn get_sock_file () -> String {
-    let cargo_manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    println!("cargo_manifest_dir is {}", cargo_manifest_dir);
-    let mut buf = PathBuf::from(cargo_manifest_dir);
-    buf.set_file_name("rust.sock");
-    
-    let sock_file_name = env::var("SOCKETFILE").unwrap_or(
-        buf.as_path().to_str().unwrap().to_string());
-    sock_file_name
+    match env::var("SOCKETFILE"){
+        Ok(f)=>f,
+        _=>{
+            let cargo_manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+            println!("cargo_manifest_dir is {}", cargo_manifest_dir);
+            let mut buf = PathBuf::from(cargo_manifest_dir);
+            buf.set_file_name("rust.sock");
+            buf.as_path().to_str().unwrap().to_string()
+        }
+    }
 }
