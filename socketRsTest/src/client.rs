@@ -5,16 +5,25 @@ use std::env;
 use std::path::PathBuf;
 use futures::Future;
 use futures::Stream;
-use hyper::{rt, Client};
+use hyper::{rt, Client, Body, Request};
 use hyperlocal::{UnixConnector, Uri};
 
 fn main() {
     
     let sock_file_name = get_sock_file ();
+    println!("sock_file_name {}", sock_file_name);
     let client = Client::builder()
         .keep_alive(false)
         .build::<_, ::hyper::Body>(UnixConnector::new());
-    let url = Uri::new(sock_file_name, "/").into();
+    let url = Uri::new(sock_file_name, "/ping").into();
+    println!("url is {:#?}", url);
+
+    // let req = Request::builder()
+    //     .method("POST")
+    //     .uri(url)
+    //     .body(Body::from("Hallo!"))
+    //     .expect("request builder");
+
 
     let work = client
         .get(url)

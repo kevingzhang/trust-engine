@@ -9,12 +9,19 @@ const PHRASE: &'static str = "It's a Unix system. I know this.";
 fn hello(
     req: Request<Body>,
 ) -> impl futures::Future<Item = Response<Body>, Error = io::Error> + Send {
-    println!("servicing new request {:?}", req);
+    //println!("servicing new request {:?}", req);
+    println!("reqested string is {:#?}", req.uri());
+    let res = match req.uri().to_string().as_ref(){
+            "/ping" =>{
+                "Pong"
+            },
+            _ => PHRASE,
+    };
     futures::future::ok(
         Response::builder()
             .header(header::CONTENT_TYPE, "text/plain")
-            .header(header::CONTENT_LENGTH, PHRASE.len() as u64)
-            .body(PHRASE.into())
+            .header(header::CONTENT_LENGTH, res.len() as u64)
+            .body(res.into())
             .expect("failed to create response"),
     )
 }
