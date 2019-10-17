@@ -7,7 +7,7 @@ use futures::Future;
 use futures::Stream;
 use hyper::{rt, Client, Body, Request};
 use hyperlocal::{UnixConnector, Uri};
-
+use url::form_urlencoded;
 fn main() {
     
     let sock_file_name = get_sock_file ();
@@ -15,7 +15,8 @@ fn main() {
     let client = Client::builder()
         .keep_alive(false)
         .build::<_, ::hyper::Body>(UnixConnector::new());
-    let url = Uri::new(sock_file_name, "/ping?name=kevin&&job=awesome").into();
+    
+    let url = Uri::new(sock_file_name, &path_with_query("ping")).into();
     println!("url is {:#?}", url);
 
     // let req = Request::builder()
@@ -59,3 +60,23 @@ fn get_sock_file () -> String {
         }
     }
 }
+
+fn path_with_query(pass_in : &str)->(String){
+    let mut map = std::collections::HashMap::new();
+    map.insert("FirstName", "Kevin");
+    map.insert("LastName" , "Zhang");
+    map.insert("Occupation" , "CodeMonkey");
+    "/".to_string() + pass_in + "?" + &build_query_url_part(map)
+}
+fn build_query_url_part(input : std::collections::HashMap<&str, &str>) -> String {
+    let mut builder = form_urlencoded::Serializer::new(String::new());
+    for (k, v) in input{
+        builder.append_pair(&k, &v);
+    }
+    builder.finish()
+        // .append_pair("foo", "bar & baz")
+        // .append_pair("saison", "Été+hiver")
+        // .finish();
+}
+
+    
