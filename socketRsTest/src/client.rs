@@ -15,7 +15,7 @@ fn main() {
     let client = Client::builder()
         .keep_alive(false)
         .build::<_, ::hyper::Body>(UnixConnector::new());
-    let url = Uri::new(sock_file_name, "/ping").into();
+    let url = Uri::new(sock_file_name, "/ping?name=kevin&&job=awesome").into();
     println!("url is {:#?}", url);
 
     // let req = Request::builder()

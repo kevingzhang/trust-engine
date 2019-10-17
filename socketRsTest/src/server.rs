@@ -9,8 +9,11 @@ const PHRASE: &'static str = "It's a Unix system. I know this.";
 fn hello(
     req: Request<Body>,
 ) -> impl futures::Future<Item = Response<Body>, Error = io::Error> + Send {
-    //println!("servicing new request {:?}", req);
-    println!("reqested string is {:#?}", req.uri());
+    println!("servicing new request {:?}", req);
+    let uri = req.uri();
+    let path_query = uri.path_and_query().unwrap();
+    println!("reqested path {:#?}", path_query.path());
+    println!("reqested query {:#?}", path_query.query().unwrap());
     let res = match req.uri().to_string().as_ref(){
             "/ping" =>{
                 "Pong"
