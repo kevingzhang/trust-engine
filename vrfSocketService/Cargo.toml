@@ -1,22 +1,15 @@
 [package]
-name = "socketRsTest"
+name = "vrfSocketService"
 version = "0.1.0"
 authors = ["kevingzhang <kevin.zhang.canada@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[[bin]]
-name = "server"
-path = "src/server.rs"
-[[bin]]
-name = "get"
-path = "src/client_get.rs"
-[[bin]]
-name = "post"
-path = "src/client_post.rs"
+
 [dependencies]
-futures = "0.1.29"
+vrf = "0.2.1"
+url = "2.1.0"
 hyper = "0.12.35"
 hyperlocal = "0.6.0"
-url = "*"
-vrf = "*"
+futures = "0.1.29"
+hex = "0.4.0"

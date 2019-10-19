@@ -1,9 +1,20 @@
 const http = require('http');
+const querystring = require('querystring');
 const SOCKETFILE = process.env.SOCKETFILE || __dirname + '/node.sock';
 
+
+const postData = querystring.stringify({
+  'msg': 'Hello World!'
+});
 const options = {
   socketPath: SOCKETFILE,
-  path: "",//'/ping',
+  path: 'ping',
+  auth: 'myauth',
+  method: 'post',
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Content-Length': Buffer.byteLength(postData)
+  }
 };
 
 const callback = res => {
@@ -16,4 +27,5 @@ const callback = res => {
 console.log("Before request")
 const clientRequest = http.request(options, callback);
 console.log("After request");
+clientRequest.write(postData);
 clientRequest.end();
