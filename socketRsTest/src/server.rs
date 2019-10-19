@@ -13,7 +13,7 @@ fn hello(
     let uri = req.uri();
     let path_query = uri.path_and_query().unwrap();
     println!("reqested path {:#?}", path_query.path());
-    println!("reqested query {:#?}", path_query.query().unwrap());
+    println!("reqested query {:#?}", path_query.query().unwrap_or("none"));
     let res = match req.uri().to_string().as_ref(){
             "/ping" =>{
                 "Pong"

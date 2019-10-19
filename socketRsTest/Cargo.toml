@@ -9,8 +9,11 @@ edition = "2018"
 name = "server"
 path = "src/server.rs"
 [[bin]]
-name = "client"
-path = "src/client.rs"
+name = "get"
+path = "src/client_get.rs"
+[[bin]]
+name = "post"
+path = "src/client_post.rs"
 [dependencies]
 futures = "0.1.29"
 hyper = "0.12.35"
