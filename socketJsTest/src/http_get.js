@@ -1,20 +1,52 @@
 const http = require('http');
 const SOCKETFILE = process.env.SOCKETFILE || __dirname + '/node.sock';
+const querystring = require('querystring');
 
 const options = {
   socketPath: SOCKETFILE,
-  path: 'ping?name=kevin',
+  path: 'get_rand_secret',
   auth: 'myauth'
 };
 
 const callback = res => {
   console.log(`STATUS: ${res.statusCode}`);
   res.setEncoding('utf8');
-  res.on('data', data => console.log(data));
+  res.on('data', data => {
+    console.log(data);
+
+    const keys = JSON.parse(data);
+    const publicKey = keys.public_key;
+    const secretKey = keys.secret_key;
+    getVrfProofUrl(publicKey, secretKey);
+    
+  });
   res.on('error', data => console.error(data));
 
 };
-console.log("Before request")
+console.log("Before request", options)
 const clientRequest = http.request(options, callback);
 console.log("After request");
 clientRequest.end();
+
+
+const getVrfProofUrl = (publicKey, secretKey)=>{
+  const postData = querystring.stringify({
+    public_key: publicKey,
+    secret_key: secretKey
+  });
+  const option = {
+    socketPath: SOCKETFILE,
+    path: "get_vrf_proof",
+    method: 'post',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(postData)
+    }
+  };
+  const callback = res=>{
+    console.log(`STATUS: ${res.statusCode}`);
+    res.on('data', data=>console.log(data));
+    res.on('err', data=>consoleerr(data));
+  };
+  http.request(option, callback).end();
+}

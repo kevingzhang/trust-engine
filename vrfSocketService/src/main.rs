@@ -7,13 +7,14 @@ use vrf::VRF;
 use std::{fs, io};
 use std::path::{PathBuf};
 const PHRASE: &'static str = "It's a Unix system. I know this.";
+use serde_json;
 
 fn hello(
     req: Request<Body>,
 ) -> impl futures::Future<Item = Response<Body>, Error = io::Error> + Send {
     println!("servicing new request {:?}", req);
     let uri = req.uri();
-     match uri.path_and_query(){
+    match uri.path_and_query(){
         Some(path_query)=>{
             println!("reqested path {:#?}", path_query.path());
             println!("reqested query {:#?}", path_query.query().unwrap_or("none"));
@@ -24,12 +25,21 @@ fn hello(
     }
     
     let res = match req.uri().to_string().as_ref(){
-            "/ping" =>{
-                "Pong"
+            "ping" =>{
+                "Pong".to_string()
             },
-            _ => PHRASE,
+            "get_rand_secret" =>{
+                get_rand_secret().to_string()
+            },
+            "get_vrf_proof" =>{
+                "Not IMplemented".to_string()
+            },
+            "verify_vrf" =>{
+                "Not IMplemented".to_string()
+            },
+            _ => req.uri().to_string(),
     };
-    vrf();
+    //vrf();
     futures::future::ok(
         Response::builder()
             .header(header::CONTENT_TYPE, "text/plain")
@@ -107,4 +117,18 @@ fn vrf() {
             println!("VRF proof is not valid: {}", e);
         }
     }
+}
+
+fn get_rand_secret()-> serde_json::Value{
+    let mut vrf = ECVRF::from_suite(CipherSuite::SECP256K1_SHA256_TAI).unwrap();
+    
+    let secret_key =
+        hex::decode("c9afa9d845ba75166b5c215767b1d6934e50c3db36e89b127b8a622b120f6721").unwrap();
+    let public_key = vrf.derive_public_key(&secret_key).unwrap();
+    serde_json::json!(
+        {
+            "secret_key": hex::encode(secret_key),
+            "public_key": hex::encode(public_key)
+        }
+    )
 }
