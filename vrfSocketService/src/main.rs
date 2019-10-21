@@ -16,18 +16,18 @@ use dirs;
 fn vrf_services(
     req: Request<Body>,
 ) -> impl futures::Future<Item = Response<Body>, Error = io::Error> + Send {
-    println!("New reqauest");
+    
     println!("servicing new request {:?}", req);
     let uri = req.uri();
-    match uri.path_and_query(){
-        Some(path_query)=>{
-            println!("reqested path {:#?}", path_query.path());
-            println!("reqested query {:#?}", path_query.query().unwrap_or("none"));
-        }
-        _=>{
-            println!("uri: {:#?}", uri);
-        }
-    }
+    // match uri.path_and_query(){
+    //     Some(path_query)=>{
+    //         println!("reqested path {:#?}", path_query.path());
+    //         println!("reqested query {:#?}", path_query.query().unwrap_or("none"));
+    //     }
+    //     _=>{
+    //         println!("uri: {:#?}", uri);
+    //     }
+    // }
     
     let res = match (req.method(), req.uri().path()){
             (&Method::GET, "/ping") =>{
@@ -35,7 +35,7 @@ fn vrf_services(
             },
             (&Method::GET, "/get_rand_secret") =>{
                 let ret = get_rand_secret().to_string();
-                println!("Returns: {}", ret);
+                //println!("Returns: {}", ret);
                 ret
             },
             (&Method::GET, "/get_vrf_proof") =>{
@@ -46,7 +46,7 @@ fn vrf_services(
                 let mut secret_key = String::new();
                 let mut message = String::new(); 
                 for param in params{
-                    println!("Key-Value:{} - {}", param.0, param.1);
+                    //println!("Key-Value:{} - {}", param.0, param.1);
                     match param.0.to_string().as_ref(){
                         "p"=>public_key = param.1.to_string(),
                         "s"=>secret_key = param.1.to_string(),
@@ -55,17 +55,13 @@ fn vrf_services(
                     }
                 };
                 let mut vrf = ECVRF::from_suite(CipherSuite::SECP256K1_SHA256_TAI).unwrap();
-                //let recal_public_key = vrf.derive_public_key(&hex::decode(&secret_key).unwrap()).unwrap(); 
-                //assert_eq!(hex::encode(recal_public_key), public_key);
+                let recal_public_key = vrf.derive_public_key(&hex::decode(&secret_key).unwrap()).unwrap(); 
+                assert_eq!(hex::encode(recal_public_key), public_key);
                 println!("vrf object is created");
                 let p1 = &hex::decode(&secret_key).unwrap();
-                println!("p1");
                 let p2 = &message.as_bytes();
-                println!("p2");
                 let pi = vrf.prove(p1, p2).unwrap();
-                println!("pi is {:#?}", hex::encode(&pi).to_string());
                 let hash = vrf.proof_to_hash(&pi).unwrap();
-                println!("hash is ready");
                 let ret = serde_json::json!({
                     "pi": hex::encode(pi).to_string(),
                     "hash":hex::encode(hash).to_string()
