@@ -55,10 +55,17 @@ fn vrf_services(
                     }
                 };
                 let mut vrf = ECVRF::from_suite(CipherSuite::SECP256K1_SHA256_TAI).unwrap();
-                let recal_public_key = vrf.derive_public_key(&hex::decode(&secret_key).unwrap()).unwrap(); 
+                //let recal_public_key = vrf.derive_public_key(&hex::decode(&secret_key).unwrap()).unwrap(); 
                 //assert_eq!(hex::encode(recal_public_key), public_key);
-                let pi = vrf.prove(&hex::decode(&secret_key).unwrap(), &message.as_bytes()).unwrap();
+                println!("vrf object is created");
+                let p1 = &hex::decode(&secret_key).unwrap();
+                println!("p1");
+                let p2 = &message.as_bytes();
+                println!("p2");
+                let pi = vrf.prove(p1, p2).unwrap();
+                println!("pi is {:#?}", hex::encode(&pi).to_string());
                 let hash = vrf.proof_to_hash(&pi).unwrap();
+                println!("hash is ready");
                 let ret = serde_json::json!({
                     "pi": hex::encode(pi).to_string(),
                     "hash":hex::encode(hash).to_string()
