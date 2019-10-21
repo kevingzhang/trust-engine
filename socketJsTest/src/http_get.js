@@ -25,9 +25,7 @@ const callback = res => {
   res.on('error', data => console.error(data));
 
 };
-console.log("Before request", options)
 const clientRequest = http.request(options, callback);
-console.log("After request");
 clientRequest.end();
 
 

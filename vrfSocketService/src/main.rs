@@ -154,8 +154,8 @@ fn get_sock_file () -> String {
 
 fn get_rand_secret()-> serde_json::Value{
     let mut vrf = ECVRF::from_suite(CipherSuite::SECP256K1_SHA256_TAI).unwrap();
-    let mut rng = rand::thread_rng();
-    let mut secret_key = [rng.gen(); 32];
+    let secret_key = rand::thread_rng().gen::<[u8; 32]>();
+    
     let public_key = vrf.derive_public_key(&secret_key).unwrap();
     serde_json::json!(
         {
