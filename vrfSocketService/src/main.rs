@@ -1,17 +1,20 @@
 
 use std::env;
 use hyper::service::service_fn;
-use hyper::{header, Body, Request, Response};
+use url::Url;
+use hyper::{header, Body, Request, Response, Method};
 use vrf::openssl::{CipherSuite, ECVRF};
 use vrf::VRF;
 use std::{fs, io};
 use std::path::{PathBuf};
 const PHRASE: &'static str = "It's a Unix system. I know this.";
 use serde_json;
+use std::fmt;
 
 fn hello(
     req: Request<Body>,
 ) -> impl futures::Future<Item = Response<Body>, Error = io::Error> + Send {
+    println!("New reqauest");
     println!("servicing new request {:?}", req);
     let uri = req.uri();
     match uri.path_and_query(){
@@ -24,20 +27,49 @@ fn hello(
         }
     }
     
-    let res = match req.uri().to_string().as_ref(){
-            "ping" =>{
+    let res = match (req.method(), req.uri().path()){
+            (&Method::GET, "/ping") =>{
                 "Pong".to_string()
             },
-            "get_rand_secret" =>{
-                get_rand_secret().to_string()
+            (&Method::GET, "/get_rand_secret") =>{
+                let ret = get_rand_secret().to_string();
+                println!("Returns: {}", ret);
+                ret
             },
-            "get_vrf_proof" =>{
+            (&Method::GET, "/get_vrf_proof") =>{
+                let uri_string = format!("http://unix{}", req.uri());
+                let request_url = Url::parse(&uri_string).unwrap();
+                let params = request_url.query_pairs();
+                let mut public_key = String::new();
+                let mut secret_key = String::new();
+                let mut message = String::new(); 
+                for param in params{
+                    println!("Key-Value:{} - {}", param.0, param.1);
+                    match param.0.to_string().as_ref(){
+                        "p"=>public_key = param.1.to_string(),
+                        "s"=>secret_key = param.1.to_string(),
+                        "m"=>message = param.1.to_string(),
+                        _=>()
+                    }
+                };
+                let mut vrf = ECVRF::from_suite(CipherSuite::SECP256K1_SHA256_TAI).unwrap();
+                let recal_public_key = vrf.derive_public_key(&hex::decode(&secret_key).unwrap()).unwrap(); 
+                //assert_eq!(hex::encode(recal_public_key), public_key);
+                let pi = vrf.prove(&hex::decode(&secret_key).unwrap(), &message.as_bytes()).unwrap();
+                let hash = vrf.proof_to_hash(&pi).unwrap();
+                let ret = serde_json::json!({
+                    "pi": hex::encode(pi).to_string(),
+                    "hash":hex::encode(hash).to_string()
+                });
+                ret.to_string()
+            },
+            (&Method::GET, "/verify_vrf") =>{
                 "Not IMplemented".to_string()
             },
-            "verify_vrf" =>{
-                "Not IMplemented".to_string()
+            _ => {
+                println!("did not find any match for Method:{} and path:{}", &(req.method()), &(req.uri().path()));
+                req.uri().to_string()
             },
-            _ => req.uri().to_string(),
     };
     //vrf();
     futures::future::ok(
@@ -82,9 +114,14 @@ fn get_sock_file () -> String {
     match env::var("SOCKETFILE"){
         Ok(f)=>f,
         _=>{
-            let cargo_manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-            println!("cargo_manifest_dir is {}", cargo_manifest_dir);
-            let mut buf = PathBuf::from(cargo_manifest_dir);
+             
+            let mut buf = match env::var("CARGO_MANIFEST_DIR"){
+                Ok(cargo_manifest_dir)=>{
+                    println!("cargo_manifest_dir is {}", cargo_manifest_dir);
+                    PathBuf::from(cargo_manifest_dir)
+                },
+                Err(_)=>std::env::current_dir().unwrap()
+            };
             buf.set_file_name("rust.sock");
             buf.as_path().to_str().unwrap().to_string()
         }
