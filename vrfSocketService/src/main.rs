@@ -11,7 +11,9 @@ const PHRASE: &'static str = "It's a Unix system. I know this.";
 use serde_json;
 use std::fmt;
 use rand::Rng;
-fn hello(
+use dirs;
+
+fn vrf_services(
     req: Request<Body>,
 ) -> impl futures::Future<Item = Response<Body>, Error = io::Error> + Send {
     println!("New reqauest");
@@ -120,7 +122,7 @@ fn run() -> io::Result<()> {
         }
     }
 
-    let svr = hyperlocal::server::Server::bind(&sock_file_name, || service_fn(hello))?;
+    let svr = hyperlocal::server::Server::bind(&sock_file_name, || service_fn(vrf_services))?;
 
     {
         let path = svr.local_addr().as_pathname().unwrap();
