@@ -55,9 +55,28 @@ const postVrfProofUrl = (publicKey, secretKey)=>{
 }
 
 const getVrfProof = (publicKey, secretKey)=>{
-  console.log(publicKey, secretKey);
+  //console.log(publicKey, secretKey);
   const msg = "sample";
   const path = '/get_vrf_proof?' + "p=" + publicKey + "&s=" + secretKey + "&m=" + msg; 
+  const option = {
+    socketPath: SOCKETFILE,
+    path
+  };
+  const callback = res=>{
+    console.log(`STATUS: ${res.statusCode}`);
+    res.on('data', data=>{
+      const res = new Buffer.from(data).toString('utf8');
+      console.log("response", res);
+      const resJson = JSON.parse(res);
+      getVrfVerified(resJson.pi, publicKey, msg);
+    });
+    res.on('err', data=>console.error(data));
+  };
+  http.request(option, callback).end();
+}
+
+const getVrfVerified = (pi, publicKey, message) =>{
+  const path = '/get_vrf_verified?' + "p=" + publicKey + "&pi=" + pi + "&m=" + message; 
   const option = {
     socketPath: SOCKETFILE,
     path
@@ -68,7 +87,7 @@ const getVrfProof = (publicKey, secretKey)=>{
       const bf = new Buffer.from(data);
       console.log("response buffer:", bf.toString('utf8'));
     });
-    res.on('err', data=>consoleerr(data));
+    res.on('err', data=>console.error(data));
   };
   http.request(option, callback).end();
 }

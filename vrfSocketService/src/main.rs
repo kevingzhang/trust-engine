@@ -63,8 +63,38 @@ fn hello(
                 });
                 ret.to_string()
             },
-            (&Method::GET, "/verify_vrf") =>{
-                "Not IMplemented".to_string()
+            (&Method::GET, "/get_vrf_verified") =>{
+                let uri_string = format!("http://unix{}", req.uri());
+                let request_url = Url::parse(&uri_string).unwrap();
+                let params = request_url.query_pairs();
+                let mut public_key = String::new();
+                let mut pi = String::new();
+                let mut message = String::new(); 
+                for param in params{
+                    println!("Key-Value:{} - {}", param.0, param.1);
+                    match param.0.to_string().as_ref(){
+                        "p"=>public_key = param.1.to_string(),
+                        "pi"=>pi = param.1.to_string(),
+                        "m"=>message = param.1.to_string(),
+                        _=>()
+                    }
+                };
+                let mut vrf = ECVRF::from_suite(CipherSuite::SECP256K1_SHA256_TAI).unwrap();
+                match vrf.verify(&hex::decode(&public_key).unwrap(), &hex::decode(&pi).unwrap(), &message.as_bytes()){
+                    Ok(beta) => {
+                        println!("VRF proof is valid!\nHash output: {}", hex::encode(&beta));
+                        serde_json::json!({
+                            "result":true
+                        }).to_string()
+                    }
+                    Err(e) => {
+                        println!("VRF proof is not valid: {}", e);
+                        serde_json::json!({
+                            "result":false
+                        }).to_string()
+                    }
+                }
+                
             },
             _ => {
                 println!("did not find any match for Method:{} and path:{}", &(req.method()), &(req.uri().path()));
