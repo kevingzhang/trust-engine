@@ -1,5 +1,5 @@
 const http = require('http');
-const SOCKETFILE = process.env.SOCKETFILE || __dirname + '/node.sock';
+const SOCKETFILE = process.env.SOCKETFILE || require('os').homedir() + '/sockets/vrf_service.sock';
 const querystring = require('querystring');
 
 

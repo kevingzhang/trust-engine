@@ -141,14 +141,11 @@ fn get_sock_file () -> String {
         Ok(f)=>f,
         _=>{
              
-            let mut buf = match env::var("CARGO_MANIFEST_DIR"){
-                Ok(cargo_manifest_dir)=>{
-                    println!("cargo_manifest_dir is {}", cargo_manifest_dir);
-                    PathBuf::from(cargo_manifest_dir)
-                },
-                Err(_)=>std::env::current_dir().unwrap()
-            };
-            buf.set_file_name("rust.sock");
+            let mut buf = PathBuf::from(dirs::home_dir().unwrap()).join("sockets").join("files");
+            println!("buf {:#?}", buf);
+           
+            buf.set_file_name("vrf_service.sock");
+            println!("buf {:#?}", buf);
             buf.as_path().to_str().unwrap().to_string()
         }
     }
