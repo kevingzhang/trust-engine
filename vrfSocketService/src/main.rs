@@ -82,7 +82,10 @@ fn vrf_services(
                     }
                 };
                 let mut vrf = ECVRF::from_suite(CipherSuite::SECP256K1_SHA256_TAI).unwrap();
-                match vrf.verify(&hex::decode(&public_key).unwrap(), &hex::decode(&pi).unwrap(), &message.as_bytes()){
+                let pk_ref = &hex::decode(&public_key).unwrap();
+                let pi_ref = &hex::decode(&pi).unwrap();
+                println!("pk_ref - pi_ref: {:#?}-{:#?}", pk_ref, pi_ref);
+                match vrf.verify(pk_ref, pi_ref, &message.as_bytes()){
                     Ok(beta) => {
                         println!("VRF proof is valid!\nHash output: {}", hex::encode(&beta));
                         serde_json::json!({
