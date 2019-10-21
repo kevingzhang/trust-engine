@@ -10,7 +10,7 @@ use std::path::{PathBuf};
 const PHRASE: &'static str = "It's a Unix system. I know this.";
 use serde_json;
 use std::fmt;
-
+use rand::Rng;
 fn hello(
     req: Request<Body>,
 ) -> impl futures::Future<Item = Response<Body>, Error = io::Error> + Send {
@@ -101,7 +101,7 @@ fn hello(
                 req.uri().to_string()
             },
     };
-    //vrf();
+    
     futures::future::ok(
         Response::builder()
             .header(header::CONTENT_TYPE, "text/plain")
@@ -134,12 +134,6 @@ fn run() -> io::Result<()> {
     Ok(())
 }
 
-fn main() {
-    if let Err(err) = run() {
-        eprintln!("error starting server: {}", err)
-    }
-}
-
 fn get_sock_file () -> String {
     match env::var("SOCKETFILE"){
         Ok(f)=>f,
@@ -159,38 +153,10 @@ fn get_sock_file () -> String {
 }
 
 
-fn vrf() {
-    let mut vrf = ECVRF::from_suite(CipherSuite::SECP256K1_SHA256_TAI).unwrap();
-    // Inputs: Secret Key, Public Key (derived) & Message
-    let secret_key =
-        hex::decode("c9afa9d845ba75166b5c215767b1d6934e50c3db36e89b127b8a622b120f6721").unwrap();
-    let public_key = vrf.derive_public_key(&secret_key).unwrap();
-    let message: &[u8] = b"sample";
-
-    // VRF proof and hash output
-    let pi = vrf.prove(&secret_key, &message).unwrap();
-    let hash = vrf.proof_to_hash(&pi).unwrap();
-    println!("Generated VRF proof: {}", hex::encode(&pi));
-
-    // VRF proof verification (returns VRF hash output)
-    let beta = vrf.verify(&public_key, &pi, &message);
-
-    match beta {
-        Ok(beta) => {
-            println!("VRF proof is valid!\nHash output: {}", hex::encode(&beta));
-            assert_eq!(hash, beta);
-        }
-        Err(e) => {
-            println!("VRF proof is not valid: {}", e);
-        }
-    }
-}
-
 fn get_rand_secret()-> serde_json::Value{
     let mut vrf = ECVRF::from_suite(CipherSuite::SECP256K1_SHA256_TAI).unwrap();
-    
-    let secret_key =
-        hex::decode("c9afa9d845ba75166b5c215767b1d6934e50c3db36e89b127b8a622b120f6721").unwrap();
+    let mut rng = rand::thread_rng();
+    let mut secret_key = [rng.gen(); 32];
     let public_key = vrf.derive_public_key(&secret_key).unwrap();
     serde_json::json!(
         {
@@ -198,4 +164,11 @@ fn get_rand_secret()-> serde_json::Value{
             "public_key": hex::encode(public_key)
         }
     )
+}
+
+
+fn main() {
+    if let Err(err) = run() {
+        eprintln!("error starting server: {}", err)
+    }
 }
