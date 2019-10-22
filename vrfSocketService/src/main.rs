@@ -1,4 +1,4 @@
-
+mod sortition;
 use std::env;
 use hyper::service::service_fn;
 use url::Url;
@@ -10,7 +10,9 @@ use std::path::{PathBuf};
 const PHRASE: &'static str = "It's a Unix system. I know this.";
 use serde_json;
 use std::fmt;
-use rand::Rng;
+use secp256k1::{Secp256k1, Message};
+use secp256k1::rand::OsRng;
+
 use dirs;
 
 fn vrf_services(
@@ -87,7 +89,8 @@ fn vrf_services(
                 let mut vrf = ECVRF::from_suite(CipherSuite::SECP256K1_SHA256_TAI).unwrap();
                 let pk_ref = &hex::decode(&public_key).unwrap();
                 let pi_ref = &hex::decode(&pi).unwrap();
-                println!("pk_ref - pi_ref: {:#?}-{:#?}", pk_ref, pi_ref);
+                //println!("pk_ref - pi_ref: {:#?}-{:#?}", pk_ref, pi_ref);
+                sortition::sortition();
                 match vrf.verify(pk_ref, pi_ref, &message.as_bytes()){
                     Ok(beta) => {
                         println!("VRF proof is valid!\nHash output: {}", hex::encode(&beta));
@@ -159,16 +162,20 @@ fn get_sock_file () -> String {
 
 
 fn get_rand_secret()-> serde_json::Value{
-    let mut vrf = ECVRF::from_suite(CipherSuite::SECP256K1_SHA256_TAI).unwrap();
-    //let secret_key = rand::thread_rng().gen::<[u8; 32]>();
-    let secret_key =
-        hex::decode("c9afa9d845ba75166b5c215767b1d6934e50c3db36e89b127b8a622b120f6721").unwrap();
+
+    let secp = Secp256k1::new();
+    let mut rng = OsRng::new().expect("OsRng");
+    let (secret_key, public_key) = secp.generate_keypair(&mut rng);
+    // let mut vrf = ECVRF::from_suite(CipherSuite::SECP256K1_SHA256_TAI).unwrap();
+    // //let secret_key = rand::thread_rng().gen::<[u8; 32]>();
+    // let secret_key =
+    //     hex::decode("c9afa9d845ba75166b5c215767b1d6934e50c3db36e89b127b8a622b120f6721").unwrap();
     
-    let public_key = vrf.derive_public_key(&secret_key).unwrap();
+    // let public_key = vrf.derive_public_key(&secret_key).unwrap();
     serde_json::json!(
         {
-            "secret_key": hex::encode(secret_key),
-            "public_key": hex::encode(public_key)
+            "secret_key": format!("{}", secret_key),//hex::encode(secret_key as [u8;32]),
+            "public_key": format!("{}", public_key)//hex::encode(public_key as [u8;32])
         }
     )
 }
