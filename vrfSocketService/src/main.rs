@@ -1,4 +1,4 @@
-mod sortition;
+
 use std::env;
 use hyper::service::service_fn;
 use url::Url;
@@ -7,29 +7,19 @@ use vrf::openssl::{CipherSuite, ECVRF};
 use vrf::VRF;
 use std::{fs, io};
 use std::path::{PathBuf};
-const PHRASE: &'static str = "It's a Unix system. I know this.";
 use serde_json;
-use std::fmt;
-use secp256k1::{Secp256k1, Message};
-use secp256k1::rand::OsRng;
+use secp256k1::{Secp256k1};
+use secp256k1::rand::rngs::OsRng;
+use num_bigint::BigUint;
+use num_traits::cast::FromPrimitive;
 
 use dirs;
-
+mod sortition;
 fn vrf_services(
     req: Request<Body>,
 ) -> impl futures::Future<Item = Response<Body>, Error = io::Error> + Send {
     
     println!("servicing new request {:?}", req);
-    let uri = req.uri();
-    // match uri.path_and_query(){
-    //     Some(path_query)=>{
-    //         println!("reqested path {:#?}", path_query.path());
-    //         println!("reqested query {:#?}", path_query.query().unwrap_or("none"));
-    //     }
-    //     _=>{
-    //         println!("uri: {:#?}", uri);
-    //     }
-    // }
     
     let res = match (req.method(), req.uri().path()){
             (&Method::GET, "/ping") =>{
@@ -90,7 +80,7 @@ fn vrf_services(
                 let pk_ref = &hex::decode(&public_key).unwrap();
                 let pi_ref = &hex::decode(&pi).unwrap();
                 //println!("pk_ref - pi_ref: {:#?}-{:#?}", pk_ref, pi_ref);
-                sortition::sortition();
+                //sortition::sortition();
                 match vrf.verify(pk_ref, pi_ref, &message.as_bytes()){
                     Ok(beta) => {
                         println!("VRF proof is valid!\nHash output: {}", hex::encode(&beta));
@@ -185,4 +175,34 @@ fn main() {
     if let Err(err) = run() {
         eprintln!("error starting server: {}", err)
     }
+
 }
+
+#[test]
+fn v(){
+    let total_coins = 10000;
+    let mut result : [u32;100] = [0;100];
+    let mut voted : [u32;100] = [0;100];
+    let message = b"Hello_World!";
+    for t in 1..10{
+        for i in 1..100 {
+            let secp = Secp256k1::new();
+            let mut rng = OsRng::new().expect("OsRng");
+            let (secret_key, _) = secp.generate_keypair(&mut rng);
+            let mut vrf = ECVRF::from_suite(CipherSuite::SECP256K1_SHA256_TAI).unwrap();
+
+            //let k : [u8] = hex::decode(format!("{}", secret_key).unwrap();
+            let p1 = &hex::decode(&format!("{}", secret_key)).unwrap();
+            let pi = vrf.prove(p1, message).unwrap();
+            let hash = vrf.proof_to_hash(&pi).unwrap();
+            let  hash_fixed = sortition::convert_u8_array_to_u8_32(&hash);
+            let j = sortition::get_vote(hash_fixed, BigUint::from_i64(i as i64).unwrap(), i as f64 * 100 as f64/total_coins as f64);
+            result[i] += j;
+            if j > 0 {voted[i] += 1;}
+        }       
+    }
+    println!("After 10 times vote, the results accumated to:");
+    for i in 1..100 {
+        println!("{}:{} - {}", i, result[i], voted[i]);
+    }
+}  
